@@ -2,16 +2,34 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>サーバー認証</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #23272A; color: white; margin: 0; }
+        .card { background-color: #2C2F33; padding: 30px; border-radius: 8px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); max-width: 400px; width: 90%; }
+        h2 { margin-top: 0; color: #5865F2; }
+        .btn { display: inline-block; background-color: #5865F2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 20px; transition: 0.2s; }
+        .btn:hover { background-color: #4752C4; }
+        .message { margin-top: 20px; font-size: 1.1em; font-weight: bold; }
+        .success { color: #43B581; }
+        .error { color: #F04747; }
+    </style>
 </head>
 <body>
-    <h2>🔒 サーバー認証</h2>
-    <p>下のボタンを押して、Discordアカウントの連携を許可してください。</p>
-    
-    <a href="https://discord.com/oauth2/authorize?client_id=1509972927263674451&response_type=code&redirect_uri=https%3A%2F%2Fuun-17ss.vercel.app%2F&scope=identify">
-        <button style="background-color: #5865F2; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
-            Discordで認証する
-        </button>
-    </a>
+    <div class="card">
+        {% if step == 'index' %}
+            <h2>🔒 サーバー認証</h2>
+            <p>下のボタンを押して、Discordアカウントの連携を許可してください。</p>
+            <a class="btn" href="{{ generated_url }}">Discordで認証する</a>
+
+        {% elif step == 'success' %}
+            <p class="message success">✅ 認証が完了しました！</p>
+            <p>このタブを閉じて、Discordに戻ってください。</p>
+
+        {% elif step == 'error' %}
+            <p class="message error">❌ 認証に失敗しました。</p>
+            <p>最初からやり直すか、管理者にお問い合わせください。</p>
+        {% endif %}
+    </div>
 </body>
 </html>
